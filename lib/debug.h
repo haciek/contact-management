@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <sys/types.h>
 
-void* debug_malloc(size_t size, char* file, uint line);
+extern void* debug_malloc(size_t size, char* file, uint line);
+extern void debug_free(void* buf, char* file, uint line);
 
 #endif // !DEBUG
