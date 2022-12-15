@@ -24,16 +24,16 @@ typedef struct
  /* contact functions */
 contact *contact_create(void);
 void contact_delete(contact*);
-void contact_print(contact);
+void contact_print(contact*);
 void contact_save(contact*);
+void contact_load(contact*); /* TODO: implement loading a specigic contact chosen by the user */
 void contact_input_field(char*, char*, size_t);
-
 
 void term_init(void);
 void menu_draw(char**, uint, uint);
 void cursor_move(char, uint*);
 
-bool string_modify(char*, char, size_t);
+bool string_input(char*, char, size_t);
 
 int main(void)
 {
@@ -58,20 +58,24 @@ int main(void)
 		input = getchar();
 	}
 
-	contact *c;
+	contact *c = contact_create();
 	switch (select_index) {
 		case 0:
 			printf("\nTODO\n");
+
+			contact_load(c);
+			contact_print(c);
+			/* contact_delete(c); */
+
 			break;
 		case 1:
-			c = (contact *) contact_create();
 
 			contact_input_field("Name", c->name, sizeof(c->name));
 			contact_input_field("Email", c->email, sizeof(c->email));
 			contact_input_field("Adress", c->addr, sizeof(c->addr));
 			contact_input_field("Phone number", c->phone, sizeof(c->phone));
 
-			contact_print(*c);
+			contact_print(c);
 			contact_save(c);
 			contact_delete(c);
 
@@ -90,19 +94,6 @@ int main(void)
 	return 0;
 }
 
-contact *contact_create()
-{
-	contact *c = (contact *) malloc(sizeof(contact));
-	if (c == NULL)
-	{
-		perror("Failed to malloc a contact");
-		exit(-1);
-	}
-	/* initializing the id */
-	return c;
-}
-
-void contact_delete(contact *c) { free(c); }
 
 void term_init()
 {
@@ -144,6 +135,27 @@ void cursor_move(char ch, uint* index)
 	}
 }
 
+contact *contact_create()
+{
+	contact *c = (contact *) malloc(sizeof(contact));
+	if (c == NULL)
+	{
+		perror("Failed to malloc a contact");
+		exit(-1);
+	}
+	/* initializing the id */
+	return c;
+}
+
+void contact_delete(contact *c) {
+		if (c == NULL)
+		{
+				perror("Trying to free a null contact ptr\n");
+				exit(-1);
+		}
+		free(c);
+}
+
 void contact_input_field(char* prompt, char* field, size_t field_size)
 {
 	char ch;
@@ -154,8 +166,9 @@ void contact_input_field(char* prompt, char* field, size_t field_size)
 		system("clear");
 		printf("\t--- Input contact field ---\n");
 		printf("%s: %s", prompt, field);
+
 		ch = getchar();
-		status = string_modify(field, ch, field_size);
+		status = string_input(field, ch, field_size);
 	}
 	/* while (true) */
 	/* { */
@@ -178,18 +191,60 @@ void contact_input_field(char* prompt, char* field, size_t field_size)
 	/* } */
 }
 
-void contact_print(contact c)
+void contact_print(contact *c)
 {
 	printf("\n");
-	printf("\tName: %s\n", c.name);
-	printf("\tEmail: %s\n", c.email);
-	printf("\tAddres: %s\n", c.addr);
-	printf("\tPhone: %s\n", c.phone);
+	printf("\tName: %s\n", c->name);
+	printf("\tEmail: %s\n", c->email);
+	printf("\tAddres: %s\n", c->addr);
+	printf("\tPhone: %s\n", c->phone);
+}
+
+void contact_save(contact *c) {
+	FILE *fd = fopen("./contacts.txt", "w");
+	if (fd == NULL)
+	{
+		perror("Failed to open a file");
+		exit(-1);
+	}
+
+	fprintf(fd, "%s;%s;%s;%s", c->name, c->email, c->phone, c->addr);
+
+	if (fclose(fd))
+	{
+		perror("Failed to close a file");
+		exit(-1);
+
+	}
+}
+
+void contact_load(contact *c) {
+	FILE *fd = fopen("contacts.txt", "r+");
+
+	if (fd == NULL)
+	{
+		perror("Failed to open a file");
+		exit(-1);
+	}
+	if (fscanf(fd, "%[^;];%[^;];%[^;];%[^;]\n", c->name, c->email, c->phone, c->addr))
+	{
+		perror("Failed to read a line\n");
+	}
+
+	/* removing trailing new line */
+	c->addr[strcspn(c->addr, "\n")] = 0;
+;
+	if (fclose(fd))
+	{
+		perror("Failed to close a file");
+		exit(-1);
+
+	}
 }
 
 /* Append char to a char[] of a specified size
    or deletes the last char depending on keyboard input */
-bool string_modify(char *s, char c, size_t size)
+bool string_input(char *s, char c, size_t size)
 {
 	uint len = strlen(s);
 
@@ -213,23 +268,5 @@ bool string_modify(char *s, char c, size_t size)
 }
 
 
-void contact_save(contact *c) {
-	FILE *fd = fopen("./contacts.txt", "w");
-	if (fd == NULL)
-	{
-		perror("Failed to open a file");
-		exit(-1);
-	}
-
-	char contact_info[200];
-	fprintf(fd, "%s;%s;%s;%s", c->name, c->email, c->phone, c->addr);
-
-	if (fclose(fd))
-	{
-		perror("Failed to close a file");
-		exit(-1);
-
-	}
-}
 
 
