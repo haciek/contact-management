@@ -1,33 +1,28 @@
 #include <stdbool.h>
-#include <stddef.h>
-#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
 
 #include "inc/debug.h"
-
-#define MENU_SIZE 5
-
-#define malloc(n) debug_malloc(n, __FILE__, __LINE__)
-#define free(n) debug_free(n, __FILE__, __LINE__)
+#include "inc/macros.h"
 
 typedef struct
 {
 	char name[30];
-	char addr[30];
 	char email[30];
 	char phone[10]; // one more byte for str terminator \0
-} contact;
+	char addr[30];
+} Contact;
 
- /* contact functions */
-contact *contact_create(void);
-void contact_delete(contact*);
-void contact_print(contact*);
-void contact_save(contact*);
-void contact_load(contact*); /* TODO: implement loading a specigic contact chosen by the user */
-void contact_input_field(char*, char*, size_t);
+/* contact functions */
+Contact *contact_create(size_t c_count);
+void contact_delete(Contact* c);
+void contact_serialize(Contact* c);
+void contact_deserialize(Contact *c_list, size_t c_count);
+void contact_print(Contact* c);
+void contact_menu(char, uint, Contact*);
+void contact_input_field(char* prompt, char* field, size_t field_size);
 
 void term_init(void);
 void menu_draw(char**, uint, uint);
@@ -48,49 +43,47 @@ int main(void)
 	};
 
 	uint select_index = 0;
+	char input = ' ';
 
-	char input = '\0';
 	while (true)
 	{
-		if (input == '\n') { break; }
-		cursor_move(input, &select_index);
 		menu_draw(menu_items, MENU_SIZE, select_index);
 		input = getchar();
+		if (input == KEY_ENTER) { break; }
+		cursor_move(input, &select_index);
 	}
 
-	contact *c = contact_create();
-	switch (select_index) {
-		case 0:
-			printf("\nTODO\n");
+	uint cursor_index = 0;
+	Contact *c = contact_create(0);
 
-			contact_load(c);
-			contact_print(c);
-			/* contact_delete(c); */
+	if (select_index == 0)
+	{
+		/* TODO */
+		/* count lines to determine the size of the contact list */
+		/* FILE *fd = fopen(CONTACT_FILE_PATH, "r"); */
 
-			break;
-		case 1:
+		/* reading all saved contacts to c_list */
+		Contact *c_list = contact_create(2);
+		contact_deserialize(c_list, 2);
 
-			contact_input_field("Name", c->name, sizeof(c->name));
-			contact_input_field("Email", c->email, sizeof(c->email));
-			contact_input_field("Adress", c->addr, sizeof(c->addr));
-			contact_input_field("Phone number", c->phone, sizeof(c->phone));
-
-			contact_print(c);
-			contact_save(c);
-			contact_delete(c);
-
-			break;
-		case 2:
-			printf("\nTODO\n");
-			break;
-		case 3:
-			printf("\nTODO\n");
-			break;
-		case 4:
-			printf("\nQuitting\n");
-			exit(0);
-			break;
+		contact_print(&c_list[0]);
+		contact_print(&c_list[1]);
+		contact_delete(c);
 	}
+	else if (select_index == 1)
+	{
+		/* creanting and saving a contact */
+		contact_input_field("Name", c->name, sizeof(c->name));
+		contact_input_field("Email", c->email, sizeof(c->email));
+		contact_input_field("Adress", c->addr, sizeof(c->addr));
+		contact_input_field("Phone number", c->phone, sizeof(c->phone));
+
+		contact_print(c);
+		contact_serialize(c);
+		contact_delete(c);
+
+	}
+
 	return 0;
 }
 
@@ -117,7 +110,7 @@ void menu_draw(char **menu_items, uint menu_size, uint cursor_index)
 	char cursor;
 	for (uint i = 0; i < MENU_SIZE; i++)
 	{
-		cursor= (i == cursor_index) ? '*' : ' ';
+		cursor = (i == cursor_index) ? '*' : ' ';
 		printf("\t%c[%d].%s\n", cursor, i + 1, menu_items[i]);
 	}
 }
@@ -135,9 +128,9 @@ void cursor_move(char ch, uint* index)
 	}
 }
 
-contact *contact_create()
+Contact *contact_create(size_t c_count)
 {
-	contact *c = (contact *) malloc(sizeof(contact));
+	Contact *c = (Contact *) malloc(sizeof(Contact) * c_count);
 	if (c == NULL)
 	{
 		perror("Failed to malloc a contact");
@@ -147,13 +140,13 @@ contact *contact_create()
 	return c;
 }
 
-void contact_delete(contact *c) {
-		if (c == NULL)
-		{
-				perror("Trying to free a null contact ptr\n");
-				exit(-1);
-		}
-		free(c);
+void contact_delete(Contact *c) {
+	if (c == NULL)
+	{
+		perror("Trying to free a null contact ptr\n");
+		exit(-1);
+	}
+	free(c);
 }
 
 void contact_input_field(char* prompt, char* field, size_t field_size)
@@ -163,52 +156,33 @@ void contact_input_field(char* prompt, char* field, size_t field_size)
 	while (status)
 	{
 		system("clear");
-		system("clear");
 		printf("\t--- Input contact field ---\n");
 		printf("%s: %s", prompt, field);
 
 		ch = getchar();
 		status = string_input(field, ch, field_size);
 	}
-	/* while (true) */
-	/* { */
-	/* 	char field_new[field_size]; */
-	/* 	system("clear"); */
-	/* 	printf("\t--- Input contact field ---\n"); */
-
-	/* 	printf("%s: ", prompt); */
-	/* 	scanf("%s", field_new); */
-
-	/* 	if (strlen(field_new) >= field_size) */
-	/* 	{ */
-	/* 		continue; */
-	/* 	} */
-	/* 	else */
-	/* 	{ */
-	/* 		strcat(field, field_new); */
-	/* 		break; */
-	/* 	} */
-	/* } */
 }
 
-void contact_print(contact *c)
+void contact_print(Contact *c)
 {
-	printf("\n");
-	printf("\tName: %s\n", c->name);
-	printf("\tEmail: %s\n", c->email);
+	printf("\t--- Contact Info ---\n");
+	printf("\tName:   %s\n", c->name);
+	printf("\tEmail:  %s\n", c->email);
+	printf("\tPhone:  %s\n", c->phone);
 	printf("\tAddres: %s\n", c->addr);
-	printf("\tPhone: %s\n", c->phone);
+	printf("\n");
 }
 
-void contact_save(contact *c) {
-	FILE *fd = fopen("./contacts.txt", "w");
+void contact_serialize(Contact *c) {
+	FILE *fd = fopen(CONTACT_FILE_PATH, "a");
 	if (fd == NULL)
 	{
 		perror("Failed to open a file");
 		exit(-1);
 	}
 
-	fprintf(fd, "%s;%s;%s;%s", c->name, c->email, c->phone, c->addr);
+	fprintf(fd, CONTACT_SERIALIZE_JSON, c->name, c->email, c->phone, c->addr);
 
 	if (fclose(fd))
 	{
@@ -218,28 +192,27 @@ void contact_save(contact *c) {
 	}
 }
 
-void contact_load(contact *c) {
-	FILE *fd = fopen("contacts.txt", "r+");
-
+void contact_deserialize(Contact *c_list, size_t c_count)
+{
+	FILE *fd = fopen(CONTACT_FILE_PATH, "r+");
 	if (fd == NULL)
 	{
 		perror("Failed to open a file");
 		exit(-1);
 	}
-	if (fscanf(fd, "%[^;];%[^;];%[^;];%[^;]\n", c->name, c->email, c->phone, c->addr))
+	for (uint i = 0; i < c_count; i++)
 	{
-		perror("Failed to read a line\n");
+		fscanf(fd, CONTACT_DESERIALIZE_JSON, c_list[i].name, c_list[i].email, c_list[i].phone, c_list[i].addr);
 	}
 
+	if (fclose(fd))
+	{
+		perror("Failed to close a file");
+		exit(-1);
+
+	}
 	/* removing trailing new line */
-	c->addr[strcspn(c->addr, "\n")] = 0;
-;
-	if (fclose(fd))
-	{
-		perror("Failed to close a file");
-		exit(-1);
-
-	}
+	/* c->addr[strcspn(c->addr, "\n")] = 0; */
 }
 
 /* Append char to a char[] of a specified size
@@ -248,9 +221,9 @@ bool string_input(char *s, char c, size_t size)
 {
 	uint len = strlen(s);
 
-	if (c == '\n') { return false; }
+	if (c == KEY_ENTER) { return false; }
 	/* Deletion of a char */
-	if (c == 127)
+	if (c == KEY_BACKSPACE)
 	{
 		len = (len > 0) ? len - 1 : 0;
 		s[len] = '\0';
@@ -266,7 +239,3 @@ bool string_input(char *s, char c, size_t size)
 
 	return true;
 }
-
-
-
-
