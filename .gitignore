@@ -1,3 +1,4 @@
-lib/*.o
+inc/*.o
 *.o
 main
+contacts.json

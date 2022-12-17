@@ -1,9 +1,9 @@
 CC=gcc
 CFLAGS=-Wall
-LIBS=lib/
+INC=inc
 
-%.o: %.c $(LIBS)
+%.o: %.c $(INC)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-main: main.o $(LIBS)/debug.o
-	$(CC) -o main main.o $(LIBS)debug.o
+main: *.o $(INC)/*.o
+	$(CC) -o main main.o $(INC)/*.o
