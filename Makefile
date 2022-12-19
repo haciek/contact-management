@@ -2,6 +2,7 @@ CC=gcc
 CFLAGS=-Wall
 INC=inc
 
+
 %.o: %.c $(INC)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
