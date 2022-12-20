@@ -142,48 +142,6 @@ int main(void) {
 		return 0;
 		break;
 	}
-
-	/* if (select_index == 0) { */
-
-	/* 	/1* for (uint i = 0; i < c_list_size; i++) { *1/ */
-	/* 	/1* 	contact_print(&c_list[i]); *1/ */
-	/* 	/1* } *1/ */
-	/* } */
-	/* if (select_index == 1) { */
-	/* 	contact_input_field("Name", c->name, sizeof(c->name)); */
-	/* 	contact_input_field("Email", c->email, sizeof(c->email)); */
-	/* 	contact_input_field("Phone", c->phone, sizeof(c->phone)); */
-	/* 	contact_input_field("Address", c->addr, sizeof(c->addr)); */
-	/* 	contact_serialize(c); */
-	/* } */
-	/* if (select_index == 2) { */
-	/* 	uint index = contact_select(c_list, c_list_size); */
-	/* 	contact_print(&c_list[index]); */
-	/* } */
-	/* if (select_index == 3) { */
-	/* 	uint index = contact_select(c_list, c_list_size); */
-	/* 	contact_print(&c_list[index]); */
-
-	/* 	FILE *fd = fopen(CONTACT_FILE_PATH, "w"); */
-	/* 	if (fd == NULL) { */
-	/* 		perror("Failed to open a file"); */
-	/* 		exit(-1); */
-	/* 	} */
-
-	/* 	for (uint i = 0; i < c_list_size; i++) { */
-	/* 		if (i == index) { */
-	/* 			continue; */
-	/* 		} */
-	/* 		fprintf(fd, CONTACT_SERIALIZE_JSON, c_list[i].name, */
-	/* 			c_list[i].email, c_list[i].phone, */
-	/* 			c_list[i].addr); */
-	/* 	} */
-
-	/* 	if (fclose(fd)) { */
-	/* 		perror("Failed to close a file"); */
-	/* 		exit(-1); */
-	/* 	} */
-	/* } */
 	contact_delete(c_list);
 	contact_delete(c);
 	return 0;
