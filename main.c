@@ -6,6 +6,7 @@
 #include <termios.h>
 #include <unistd.h>
 
+/* #include "inc/debug.h" */
 #include "inc/debug.h"
 #include "inc/macros.h"
 
